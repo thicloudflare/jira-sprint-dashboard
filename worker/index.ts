@@ -17,19 +17,27 @@ async function handleJiraProxy(request: Request): Promise<Response> {
     const requestBody = await request.json() as ProxyRequest;
     const { url, auth, cfAccessClientId, cfAccessClientSecret, cfAccessToken, method = 'GET', body } = requestBody;
 
+    console.log('[Worker] Jira proxy request:', { url, method, hasCfToken: !!cfAccessToken, hasAuth: !!auth });
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
 
-    // CF Access authentication (for cfdata.org)
+    // Always include Basic Auth for Jira authentication
+    if (auth) {
+      headers['Authorization'] = auth;
+      console.log('[Worker] Using Basic Auth');
+    }
+
+    // CF Access authentication (for cfdata.org) - ADD to Basic Auth, don't replace
     if (cfAccessToken) {
       headers['CF-Access-Token'] = cfAccessToken;
+      console.log('[Worker] Also using CF-Access-Token');
     } else if (cfAccessClientId && cfAccessClientSecret) {
       headers['CF-Access-Client-Id'] = cfAccessClientId;
       headers['CF-Access-Client-Secret'] = cfAccessClientSecret;
-    } else if (auth) {
-      headers['Authorization'] = auth;
+      console.log('[Worker] Also using CF-Access service token');
     }
 
     const fetchOptions: RequestInit = {
@@ -44,12 +52,19 @@ async function handleJiraProxy(request: Request): Promise<Response> {
     const response = await fetch(url, fetchOptions);
 
     const contentType = response.headers.get('content-type');
+    console.log('[Worker] Jira response:', { status: response.status, contentType });
+    
     let data;
     const text = await response.text();
 
     if (contentType && contentType.includes('application/json')) {
       data = text ? JSON.parse(text) : {};
+      // Log issue count if it's a search response
+      if (data.issues) {
+        console.log('[Worker] Found issues:', data.issues.length);
+      }
     } else {
+      console.log('[Worker] Non-JSON response, first 200 chars:', text.substring(0, 200));
       data = {
         error: 'Jira returned HTML instead of JSON. Authentication may have failed.',
         statusCode: response.status,
@@ -68,6 +83,7 @@ async function handleJiraProxy(request: Request): Promise<Response> {
       },
     });
   } catch (error) {
+    console.error('[Worker] Jira proxy error:', error);
     return new Response(JSON.stringify({
       ok: false,
       error: error instanceof Error ? error.message : 'Unknown error',

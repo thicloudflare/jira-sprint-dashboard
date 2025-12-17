@@ -67,6 +67,13 @@ export class JiraApiService {
   }
 
   private async proxyRequest(url: string): Promise<any> {
+    console.log('🔗 Proxy request to:', url);
+    console.log('🔑 Auth config:', { 
+      hasCfToken: !!this.config.cfAccessToken,
+      cfTokenLength: this.config.cfAccessToken?.length,
+      hasBasicAuth: !!this.config.apiToken 
+    });
+    
     const response = await fetch(this.proxyUrl, {
       method: 'POST',
       headers: {
@@ -81,9 +88,12 @@ export class JiraApiService {
       }),
     });
 
+    console.log('📬 Proxy response status:', response.status);
     const result = await response.json();
+    console.log('📬 Proxy result:', { ok: result.ok, status: result.status, hasData: !!result.data, error: result.error });
 
     if (!result.ok) {
+      console.error('❌ Proxy error:', result);
       throw new Error(result.error || 'Proxy request failed');
     }
 
@@ -102,12 +112,14 @@ export class JiraApiService {
 
   async searchIssues(jql: string, maxResults: number = 50): Promise<JiraIssue[]> {
     try {
+      console.log('📡 Searching Jira with JQL:', jql);
       const data = await this.proxyRequest(
         `${this.baseUrl}/search?jql=${encodeURIComponent(jql)}&maxResults=${maxResults}&fields=*all`
       );
+      console.log('📦 Jira search response:', { total: data.total, issueCount: data.issues?.length, data });
       return data.issues || [];
     } catch (error) {
-      console.error('Failed to fetch Jira issues:', error);
+      console.error('❌ Failed to fetch Jira issues:', error);
       throw error;
     }
   }
