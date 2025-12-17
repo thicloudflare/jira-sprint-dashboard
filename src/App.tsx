@@ -271,6 +271,7 @@ function App() {
             issuetype: { name: 'Story' },
             project: { key: jiraConfig.projectKey },
             parent: { key: epic.id },
+            labels: [phaseType], // Add phase label for tracking
           };
           
           // Try with customfield_10040 (the correct story points field for this Jira instance)
