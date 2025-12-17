@@ -4,13 +4,13 @@ import { mockData } from './mockData';
 import { Sidebar } from './components/Sidebar';
 import { Timeline } from './components/Timeline';
 import { PhaseDetailPanel } from './components/PhaseDetailPanel';
-import { JiraSettings, type JiraConfig } from './components/JiraSettings';
+import { JiraSettings, JiraConnectionForm, type JiraConfig } from './components/JiraSettings';
 import { JiraApiService } from './services/jiraApi';
 import { JiraWriteService } from './services/jiraWrite';
 import { transformJiraDataToTimeline } from './services/jiraTransformer';
 // import { PhasesApiService } from './services/phasesApi';
 import { getCurrentQuarter } from './components/QuarterFilter';
-import { Loader, AlertCircle, Plug, ArrowRight } from 'lucide-react';
+import { Loader, AlertCircle, Plug } from 'lucide-react';
 
 const PHASE_COLORS: Record<PhaseType, string> = {
   Discovery: '#8B5CF6',
@@ -555,33 +555,20 @@ function App() {
 
 
       {!isConnected && !isLoading ? (
-        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
-          <div className="text-center max-w-md px-8">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Plug className="w-10 h-10 text-blue-600" />
+        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 p-8">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Plug className="w-8 h-8 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to Your Jira Dashboard</h2>
+              <p className="text-gray-600">
+                Connect your Jira account to visualize your epics and track progress across phases.
+              </p>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-3">Welcome to Your Jira Dashboard</h2>
-            <p className="text-gray-600 mb-6">
-              Connect your Jira account to visualize your epics and track progress across phases.
-            </p>
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 text-left mb-6">
-              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm">1</span>
-                Get Started
-              </h3>
-              <ul className="text-sm text-gray-600 space-y-2 ml-8">
-                <li>Click the <strong>Settings</strong> icon in the top-right corner</li>
-                <li>Enter your Jira domain and credentials</li>
-                <li>Click <strong>Connect</strong> to load your epics</li>
-              </ul>
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+              <JiraConnectionForm onConnect={handleJiraConnect} isConnected={isConnected} embedded />
             </div>
-            <button
-              onClick={() => document.querySelector<HTMLButtonElement>('[data-jira-settings]')?.click()}
-              className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              Connect to Jira
-              <ArrowRight className="w-4 h-4" />
-            </button>
           </div>
         </div>
       ) : (

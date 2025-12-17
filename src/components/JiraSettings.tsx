@@ -6,6 +6,12 @@ interface JiraSettingsProps {
   isConnected: boolean;
 }
 
+interface JiraConnectionFormProps {
+  onConnect: (config: JiraConfig) => void;
+  isConnected: boolean;
+  embedded?: boolean;
+}
+
 export interface JiraConfig {
   domain: string;
   email: string;
@@ -17,8 +23,8 @@ export interface JiraConfig {
   cfAccessToken?: string;
 }
 
-export const JiraSettings = ({ onConnect, isConnected }: JiraSettingsProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+// Exported form component for embedding in empty state
+export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }: JiraConnectionFormProps) => {
   const [isTesting, setIsTesting] = useState(false);
   const [cfAuthMethod, setCfAuthMethod] = useState<'token' | 'service'>('token');
   const [showFilters, setShowFilters] = useState(false);
@@ -48,8 +54,208 @@ export const JiraSettings = ({ onConnect, isConnected }: JiraSettingsProps) => {
 
     await onConnect(config);
     setIsTesting(false);
-    setIsOpen(false);
   };
+
+  return (
+    <div className={embedded ? '' : 'bg-white rounded-lg shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto'}>
+      {!embedded && (
+        <>
+          {isConnected ? (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <span className="text-green-800 text-sm">Connected to Jira</span>
+            </div>
+          ) : (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
+              <XCircle className="w-5 h-5 text-yellow-600" />
+              <span className="text-yellow-800 text-sm">Not connected</span>
+            </div>
+          )}
+        </>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Jira Domain *
+          </label>
+          <input
+            type="text"
+            value={config.domain}
+            onChange={(e) => setConfig({ ...config, domain: e.target.value })}
+            placeholder="jira.cfdata.org"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Your Jira domain (without https://)
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Email *
+          </label>
+          <input
+            type="email"
+            value={config.email}
+            onChange={(e) => setConfig({ ...config, email: e.target.value })}
+            placeholder="your-email@company.com"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            API Token *
+          </label>
+          <input
+            type="password"
+            value={config.apiToken}
+            onChange={(e) => setConfig({ ...config, apiToken: e.target.value })}
+            placeholder="Your Jira API token"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            <a
+              href={config.domain ? `https://${config.domain}/plugins/servlet/de.resolution.apitokenauth/admin` : 'https://id.atlassian.com/manage-profile/security/api-tokens'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Create API token here
+            </a>
+          </p>
+        </div>
+
+        <div className="border-t border-gray-200 pt-4">
+          <p className="text-sm font-medium text-gray-700 mb-3">Cloudflare Access (Required for cfdata.org)</p>
+          
+          <div className="space-y-3">
+            <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <input
+                type="radio"
+                name="cfAuthMethod"
+                checked={cfAuthMethod === 'token'}
+                onChange={() => setCfAuthMethod('token')}
+                className="mt-1"
+              />
+              <div className="flex-1">
+                <span className="text-sm font-medium text-gray-700">Access Token (Recommended)</span>
+                {cfAuthMethod === 'token' && (
+                  <div className="mt-2">
+                    <input
+                      type="password"
+                      value={config.cfAccessToken}
+                      onChange={(e) => setConfig({ ...config, cfAccessToken: e.target.value })}
+                      placeholder="JWT from cloudflared"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Run <code className="bg-gray-100 px-1 rounded">cloudflared access token -app jira.cfdata.org</code>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </label>
+
+            <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <input
+                type="radio"
+                name="cfAuthMethod"
+                checked={cfAuthMethod === 'service'}
+                onChange={() => setCfAuthMethod('service')}
+                className="mt-1"
+              />
+              <div className="flex-1">
+                <span className="text-sm font-medium text-gray-700">Service Token</span>
+                {cfAuthMethod === 'service' && (
+                  <div className="mt-2 space-y-2">
+                    <input
+                      type="text"
+                      value={config.cfAccessClientId}
+                      onChange={(e) => setConfig({ ...config, cfAccessClientId: e.target.value })}
+                      placeholder="CF Access Client ID"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                    <input
+                      type="password"
+                      value={config.cfAccessClientSecret}
+                      onChange={(e) => setConfig({ ...config, cfAccessClientSecret: e.target.value })}
+                      placeholder="CF Access Client Secret"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-200 pt-4">
+          <button
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center justify-between w-full text-sm font-medium text-gray-700 hover:text-gray-900"
+          >
+            <span>Optional Filters</span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {showFilters && (
+            <div className="mt-3 space-y-3">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Project Key
+                </label>
+                <input
+                  type="text"
+                  value={config.projectKey}
+                  onChange={(e) => setConfig({ ...config, projectKey: e.target.value })}
+                  placeholder="e.g., PROJ"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Assignee (username)
+                </label>
+                <input
+                  type="text"
+                  value={config.assignee}
+                  onChange={(e) => setConfig({ ...config, assignee: e.target.value })}
+                  placeholder="e.g., currentUser()"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={isTesting}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {isTesting ? (
+            <>
+              <Loader className="w-4 h-4 animate-spin" />
+              Connecting...
+            </>
+          ) : (
+            'Connect to Jira'
+          )}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export const JiraSettings = ({ onConnect, isConnected }: JiraSettingsProps) => {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
@@ -77,206 +283,7 @@ export const JiraSettings = ({ onConnect, isConnected }: JiraSettingsProps) => {
                 ✕
               </button>
             </div>
-
-            {isConnected ? (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-green-800 text-sm">Connected to Jira</span>
-              </div>
-            ) : (
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
-                <XCircle className="w-5 h-5 text-yellow-600" />
-                <span className="text-yellow-800 text-sm">Not connected</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Jira Domain *
-                </label>
-                <input
-                  type="text"
-                  value={config.domain}
-                  onChange={(e) => setConfig({ ...config, domain: e.target.value })}
-                  placeholder="your-company.atlassian.net"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Your Atlassian domain (without https://)
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  value={config.email}
-                  onChange={(e) => setConfig({ ...config, email: e.target.value })}
-                  placeholder="your-email@company.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  API Token *
-                </label>
-                <input
-                  type="password"
-                  value={config.apiToken}
-                  onChange={(e) => setConfig({ ...config, apiToken: e.target.value })}
-                  placeholder="Your Jira API token"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  <a
-                    href="https://id.atlassian.com/manage-profile/security/api-tokens"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    Create API token here
-                  </a>
-                </p>
-              </div>
-
-              <div className="border-t border-gray-200 pt-4">
-                <p className="text-sm font-medium text-gray-700 mb-3">Cloudflare Access (Required for cfdata.org)</p>
-                
-                <div className="space-y-3">
-                  <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input
-                      type="radio"
-                      name="cfAuthMethod"
-                      checked={cfAuthMethod === 'token'}
-                      onChange={() => setCfAuthMethod('token')}
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      <span className="text-sm font-medium text-gray-700">Access Token (Recommended)</span>
-                      {cfAuthMethod === 'token' && (
-                        <div className="mt-2">
-                          <input
-                            type="password"
-                            value={config.cfAccessToken}
-                            onChange={(e) => setConfig({ ...config, cfAccessToken: e.target.value })}
-                            placeholder="JWT from cloudflared"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            Run <code className="bg-gray-100 px-1 rounded">cloudflared access token -app jira.cfdata.org</code>
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </label>
-
-                  <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input
-                      type="radio"
-                      name="cfAuthMethod"
-                      checked={cfAuthMethod === 'service'}
-                      onChange={() => setCfAuthMethod('service')}
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      <span className="text-sm font-medium text-gray-700">Service Token</span>
-                      {cfAuthMethod === 'service' && (
-                        <div className="mt-2 space-y-2">
-                          <input
-                            type="text"
-                            value={config.cfAccessClientId}
-                            onChange={(e) => setConfig({ ...config, cfAccessClientId: e.target.value })}
-                            placeholder="CF Access Client ID"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          />
-                          <input
-                            type="password"
-                            value={config.cfAccessClientSecret}
-                            onChange={(e) => setConfig({ ...config, cfAccessClientSecret: e.target.value })}
-                            placeholder="CF Access Client Secret"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center justify-between w-full text-sm font-medium text-gray-700 hover:text-gray-900"
-                >
-                  <span>Optional Filters</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {showFilters && (
-                  <div className="mt-3 space-y-3">
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-1">
-                        Project Key
-                      </label>
-                      <input
-                        type="text"
-                        value={config.projectKey}
-                        onChange={(e) => setConfig({ ...config, projectKey: e.target.value })}
-                        placeholder="e.g., PROJ"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-1">
-                        Assignee (username)
-                      </label>
-                      <input
-                        type="text"
-                        value={config.assignee}
-                        onChange={(e) => setConfig({ ...config, assignee: e.target.value })}
-                        placeholder="e.g., currentUser()"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isTesting}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isTesting ? (
-                  <>
-                    <Loader className="w-4 h-4 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  'Connect to Jira'
-                )}
-              </button>
-            </form>
-
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h4 className="text-sm font-semibold text-blue-900 mb-2">📘 Setup Instructions:</h4>
-              <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
-                <li>Go to Atlassian account settings</li>
-                <li>Create a new API token</li>
-                <li>Copy your Jira domain (without https://)</li>
-                <li>Enter your credentials above</li>
-                <li>Click "Connect to Jira"</li>
-              </ol>
-            </div>
+            <JiraConnectionForm onConnect={(config) => { onConnect(config); setIsOpen(false); }} isConnected={isConnected} embedded />
           </div>
         </div>
       )}
