@@ -29,6 +29,9 @@ export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }:
   const [isTesting, setIsTesting] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showTokenHelp, setShowTokenHelp] = useState(false);
+  const [cfAuthMethod, setCfAuthMethod] = useState<'token' | 'service'>(
+    localStorage.getItem('jira_cf_client_id') ? 'service' : 'token'
+  );
   const [config, setConfig] = useState<JiraConfig>({
     domain: localStorage.getItem('jira_domain') || '',
     email: localStorage.getItem('jira_email') || '',
@@ -132,10 +135,80 @@ export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }:
         </div>
 
         <div className="border-t border-gray-200 pt-4">
-          <p className="text-sm font-medium text-gray-700 mb-1">Cloudflare Access Token *</p>
+          <p className="text-sm font-medium text-gray-700 mb-1">Cloudflare Access *</p>
           <p className="text-xs text-gray-500 mb-3">Required for accessing jira.cfdata.org</p>
           
-          <div className="space-y-3">
+          <div className="flex gap-2 mb-3">
+            <button
+              type="button"
+              onClick={() => setCfAuthMethod('service')}
+              className={`flex-1 py-2 px-3 text-xs font-medium rounded-lg border transition-colors ${
+                cfAuthMethod === 'service'
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              Service Token (Recommended)
+            </button>
+            <button
+              type="button"
+              onClick={() => setCfAuthMethod('token')}
+              className={`flex-1 py-2 px-3 text-xs font-medium rounded-lg border transition-colors ${
+                cfAuthMethod === 'token'
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              Access Token (Local only)
+            </button>
+          </div>
+
+          {cfAuthMethod === 'service' ? (
+            <div className="p-3 border border-gray-200 rounded-lg bg-gray-50 space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                <input
+                  type="text"
+                  value={config.cfAccessClientId}
+                  onChange={(e) => setConfig({ ...config, cfAccessClientId: e.target.value })}
+                  placeholder="CF-Access-Client-Id"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
+                <input
+                  type="password"
+                  value={config.cfAccessClientSecret}
+                  onChange={(e) => setConfig({ ...config, cfAccessClientSecret: e.target.value })}
+                  placeholder="CF-Access-Client-Secret"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTokenHelp(!showTokenHelp)}
+                className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+              >
+                <ChevronDown className={`w-3 h-3 transition-transform ${showTokenHelp ? 'rotate-180' : ''}`} />
+                How to create a Service Token
+              </button>
+              {showTokenHelp && (
+                <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+                  <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
+                    <li>Go to Cloudflare Zero Trust Dashboard</li>
+                    <li>Navigate to Access → Service Auth</li>
+                    <li>Create a new Service Token</li>
+                    <li>Copy the Client ID and Client Secret</li>
+                    <li>Paste them above</li>
+                  </ol>
+                  <p className="mt-3 text-xs text-green-700 bg-green-50 p-2 rounded">
+                    ✓ Service tokens don't expire and work for deployed apps.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
             <div className="p-3 border border-gray-200 rounded-lg bg-gray-50">
               <label className="block text-sm font-medium text-gray-700 mb-2">Access Token</label>
               <input
@@ -144,7 +217,6 @@ export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }:
                 onChange={(e) => setConfig({ ...config, cfAccessToken: e.target.value })}
                 placeholder="Paste token here"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                required
               />
               <button
                 type="button"
@@ -158,19 +230,18 @@ export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }:
                 <div className="mt-2 p-3 bg-blue-50 rounded-lg">
                   <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
                     <li>Open Terminal</li>
-                    <li>First, login: <code className="bg-blue-100 px-1 rounded">cloudflared access login jira.cfdata.org</code></li>
-                    <li>A browser window will open - log in with your Cloudflare credentials</li>
-                    <li>After login, run: <code className="bg-blue-100 px-1 rounded">cloudflared access token -app jira.cfdata.org</code></li>
-                    <li>Copy the entire token and paste it above</li>
+                    <li>Run: <code className="bg-blue-100 px-1 rounded">cloudflared access login jira.cfdata.org</code></li>
+                    <li>Log in with your Cloudflare credentials</li>
+                    <li>Run: <code className="bg-blue-100 px-1 rounded">cloudflared access token -app jira.cfdata.org</code></li>
+                    <li>Copy the token and paste it above</li>
                   </ol>
                   <p className="mt-3 text-xs text-amber-700 bg-amber-50 p-2 rounded">
-                    ⚠️ Tokens expire after ~24 hours. You'll need to refresh periodically.
+                    ⚠️ Access tokens only work locally. Use Service Token for deployed apps.
                   </p>
                 </div>
               )}
             </div>
-
-          </div>
+          )}
         </div>
 
         <div className="border-t border-gray-200 pt-4">
@@ -216,7 +287,8 @@ export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }:
 
         <button
           type="submit"
-          disabled={isTesting || !config.domain || !config.email || !config.apiToken || !config.cfAccessToken}
+          disabled={isTesting || !config.domain || !config.email || !config.apiToken || 
+            (cfAuthMethod === 'service' ? (!config.cfAccessClientId || !config.cfAccessClientSecret) : !config.cfAccessToken)}
           className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isTesting ? (

@@ -24,20 +24,21 @@ async function handleJiraProxy(request: Request): Promise<Response> {
       'Accept': 'application/json',
     };
 
-    // Always include Basic Auth for Jira authentication
-    if (auth) {
-      headers['Authorization'] = auth;
-      console.log('[Worker] Using Basic Auth');
-    }
-
-    // CF Access authentication (for cfdata.org) - ADD to Basic Auth, don't replace
+    // CF Access authentication (for cfdata.org) - don't use Basic Auth with CF Access
     if (cfAccessToken) {
+      // Try multiple header formats for CF Access token
       headers['CF-Access-Token'] = cfAccessToken;
-      console.log('[Worker] Also using CF-Access-Token');
+      headers['cf-access-token'] = cfAccessToken;
+      headers['Cookie'] = `CF_Authorization=${cfAccessToken}`;
+      console.log('[Worker] Using CF-Access-Token + Cookie (no Basic Auth)');
     } else if (cfAccessClientId && cfAccessClientSecret) {
       headers['CF-Access-Client-Id'] = cfAccessClientId;
       headers['CF-Access-Client-Secret'] = cfAccessClientSecret;
-      console.log('[Worker] Also using CF-Access service token');
+      console.log('[Worker] Using CF-Access service token (no Basic Auth)');
+    } else if (auth) {
+      // Only use Basic Auth for standard Atlassian Cloud (no CF Access)
+      headers['Authorization'] = auth;
+      console.log('[Worker] Using Basic Auth');
     }
 
     const fetchOptions: RequestInit = {
