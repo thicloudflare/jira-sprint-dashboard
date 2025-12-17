@@ -8,6 +8,7 @@ interface TimelineProps {
   onAddPhase?: (epicId: string, phaseType: PhaseType) => void;
   onReorderPhases?: (epicId: string, fromIndex: number, toIndex: number) => void;
   jiraDomain?: string;
+  userEmail?: string;
 }
 
 function calculateSprintBoundaries(startDate: Date, endDate: Date): Date[] {
@@ -29,7 +30,15 @@ function getDatePosition(date: Date, startDate: Date, endDate: Date): number {
   return (elapsed / totalDuration) * 100;
 }
 
-export const Timeline = ({ data, onPhaseClick, selectedPhase, onAddPhase, onReorderPhases, jiraDomain }: TimelineProps) => {
+export const Timeline = ({ data, onPhaseClick, selectedPhase, onAddPhase, onReorderPhases, jiraDomain, userEmail }: TimelineProps) => {
+  const getDisplayName = () => {
+    if (userEmail) {
+      const username = userEmail.split('@')[0];
+      return username.charAt(0).toUpperCase() + username.slice(1) + "'s";
+    }
+    return 'Your';
+  };
+
   const sprintBoundaries = calculateSprintBoundaries(data.quarterStart, data.quarterEnd);
   
   console.log('🗺️ Timeline rendering with data:', {
@@ -45,7 +54,7 @@ export const Timeline = ({ data, onPhaseClick, selectedPhase, onAddPhase, onReor
   return (
     <div className="flex-1 bg-white p-8 overflow-x-auto">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Personal Roadmap</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">{getDisplayName()} Roadmap</h2>
         <p className="text-gray-600 mb-4">
           Dynamic timeline visualization based on story points and remaining effort
         </p>

@@ -567,6 +567,7 @@ function App() {
         onAddPhase={handleAddPhase}
         onReorderPhases={handleReorderPhases}
         jiraDomain={jiraConfig?.domain}
+        userEmail={jiraConfig?.email}
       />
       <PhaseDetailPanel
         phase={selectedPhase}
