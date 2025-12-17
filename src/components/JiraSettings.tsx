@@ -149,9 +149,9 @@ export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }:
                 <p className="text-xs font-medium text-blue-800 mb-2">How to get your token:</p>
                 <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
                   <li>Open Terminal</li>
-                  <li>Run: <code className="bg-blue-100 px-1 rounded">cloudflared access token -app jira.cfdata.org</code></li>
+                  <li>First, login: <code className="bg-blue-100 px-1 rounded">cloudflared access login jira.cfdata.org</code></li>
                   <li>A browser window will open - log in with your Cloudflare credentials</li>
-                  <li>After login, the token will be printed in Terminal</li>
+                  <li>After login, run: <code className="bg-blue-100 px-1 rounded">cloudflared access token -app jira.cfdata.org</code></li>
                   <li>Copy the entire token and paste it above</li>
                 </ol>
               </div>
