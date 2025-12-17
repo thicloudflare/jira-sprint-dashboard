@@ -126,6 +126,18 @@ function App() {
     }
   }, [jiraConfig]);
 
+  const handleJiraDisconnect = () => {
+    setIsConnected(false);
+    setJiraConfig(null);
+    setJiraData(null);
+    setJiraWriteService(null);
+    setTimelineData({
+      ...mockData,
+      epics: mockData.epics.map(epic => ({ ...epic, phases: epic.phases.map(p => ({ ...p })) }))
+    });
+    setUseMockData(true);
+  };
+
   const handleEpicStatusChange = (epicId: string, newStatus: EpicStatus) => {
     const updateData = (prevData: TimelineData) => {
       const updatedEpics = prevData.epics.map(epic => {
@@ -524,7 +536,7 @@ function App() {
 
   return (
     <div className="flex h-screen bg-gray-100 relative">
-      <JiraSettings onConnect={handleJiraConnect} isConnected={isConnected} />
+      <JiraSettings onConnect={handleJiraConnect} onDisconnect={handleJiraDisconnect} isConnected={isConnected} />
       
       {isLoading && (
         <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center z-40">

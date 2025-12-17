@@ -3,6 +3,7 @@ import { Settings, CheckCircle, XCircle, Loader, ChevronDown } from 'lucide-reac
 
 interface JiraSettingsProps {
   onConnect: (config: JiraConfig) => void;
+  onDisconnect?: () => void;
   isConnected: boolean;
 }
 
@@ -254,8 +255,21 @@ export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }:
   );
 };
 
-export const JiraSettings = ({ onConnect, isConnected }: JiraSettingsProps) => {
+export const JiraSettings = ({ onConnect, onDisconnect, isConnected }: JiraSettingsProps) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleDisconnect = () => {
+    localStorage.removeItem('jira_domain');
+    localStorage.removeItem('jira_email');
+    localStorage.removeItem('jira_token');
+    localStorage.removeItem('jira_project');
+    localStorage.removeItem('jira_assignee');
+    localStorage.removeItem('jira_cf_client_id');
+    localStorage.removeItem('jira_cf_client_secret');
+    localStorage.removeItem('jira_cf_access_token');
+    onDisconnect?.();
+    setIsOpen(false);
+  };
 
   return (
     <>
@@ -283,6 +297,20 @@ export const JiraSettings = ({ onConnect, isConnected }: JiraSettingsProps) => {
                 ✕
               </button>
             </div>
+            {isConnected && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-green-800 text-sm">Connected to Jira</span>
+                </div>
+                <button
+                  onClick={handleDisconnect}
+                  className="text-sm text-red-600 hover:text-red-800 font-medium"
+                >
+                  Disconnect
+                </button>
+              </div>
+            )}
             <JiraConnectionForm onConnect={(config) => { onConnect(config); setIsOpen(false); }} isConnected={isConnected} embedded />
           </div>
         </div>
