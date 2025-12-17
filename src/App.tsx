@@ -102,6 +102,7 @@ function App() {
     const savedDomain = localStorage.getItem('jira_domain');
     const savedEmail = localStorage.getItem('jira_email');
     const savedToken = localStorage.getItem('jira_token');
+    const savedCfToken = localStorage.getItem('jira_cf_access_token');
 
     if (savedDomain && savedEmail && savedToken) {
       handleJiraConnect({
@@ -110,6 +111,9 @@ function App() {
         apiToken: savedToken,
         projectKey: localStorage.getItem('jira_project') || undefined,
         assignee: localStorage.getItem('jira_assignee') || undefined,
+        cfAccessClientId: localStorage.getItem('jira_cf_client_id') || undefined,
+        cfAccessClientSecret: localStorage.getItem('jira_cf_client_secret') || undefined,
+        cfAccessToken: savedCfToken || undefined,
       });
     }
   }, []);
