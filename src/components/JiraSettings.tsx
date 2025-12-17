@@ -27,7 +27,6 @@ export interface JiraConfig {
 // Exported form component for embedding in empty state
 export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }: JiraConnectionFormProps) => {
   const [isTesting, setIsTesting] = useState(false);
-  const [cfAuthMethod, setCfAuthMethod] = useState<'token' | 'service'>('token');
   const [showFilters, setShowFilters] = useState(false);
   const [config, setConfig] = useState<JiraConfig>({
     domain: localStorage.getItem('jira_domain') || '',
@@ -121,7 +120,7 @@ export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }:
           />
           <p className="text-xs text-gray-500 mt-1">
             <a
-              href={config.domain ? `https://${config.domain}/plugins/servlet/de.resolution.apitokenauth/admin` : 'https://id.atlassian.com/manage-profile/security/api-tokens'}
+              href="https://jira.cfdata.org/plugins/servlet/de.resolution.apitokenauth/admin"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
@@ -132,66 +131,32 @@ export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }:
         </div>
 
         <div className="border-t border-gray-200 pt-4">
-          <p className="text-sm font-medium text-gray-700 mb-3">Cloudflare Access (Required for cfdata.org)</p>
+          <p className="text-sm font-medium text-gray-700 mb-1">Cloudflare Access Token *</p>
+          <p className="text-xs text-gray-500 mb-3">Required for accessing jira.cfdata.org</p>
           
           <div className="space-y-3">
-            <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+            <div className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Access Token</label>
               <input
-                type="radio"
-                name="cfAuthMethod"
-                checked={cfAuthMethod === 'token'}
-                onChange={() => setCfAuthMethod('token')}
-                className="mt-1"
+                type="password"
+                value={config.cfAccessToken}
+                onChange={(e) => setConfig({ ...config, cfAccessToken: e.target.value })}
+                placeholder="Paste token here"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                required
               />
-              <div className="flex-1">
-                <span className="text-sm font-medium text-gray-700">Access Token (Recommended)</span>
-                {cfAuthMethod === 'token' && (
-                  <div className="mt-2">
-                    <input
-                      type="password"
-                      value={config.cfAccessToken}
-                      onChange={(e) => setConfig({ ...config, cfAccessToken: e.target.value })}
-                      placeholder="JWT from cloudflared"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Run <code className="bg-gray-100 px-1 rounded">cloudflared access token -app jira.cfdata.org</code>
-                    </p>
-                  </div>
-                )}
+              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                <p className="text-xs font-medium text-blue-800 mb-2">How to get your token:</p>
+                <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
+                  <li>Open Terminal</li>
+                  <li>Run: <code className="bg-blue-100 px-1 rounded">cloudflared access token -app jira.cfdata.org</code></li>
+                  <li>A browser window will open - log in with your Cloudflare credentials</li>
+                  <li>After login, the token will be printed in Terminal</li>
+                  <li>Copy the entire token and paste it above</li>
+                </ol>
               </div>
-            </label>
+            </div>
 
-            <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-              <input
-                type="radio"
-                name="cfAuthMethod"
-                checked={cfAuthMethod === 'service'}
-                onChange={() => setCfAuthMethod('service')}
-                className="mt-1"
-              />
-              <div className="flex-1">
-                <span className="text-sm font-medium text-gray-700">Service Token</span>
-                {cfAuthMethod === 'service' && (
-                  <div className="mt-2 space-y-2">
-                    <input
-                      type="text"
-                      value={config.cfAccessClientId}
-                      onChange={(e) => setConfig({ ...config, cfAccessClientId: e.target.value })}
-                      placeholder="CF Access Client ID"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                    <input
-                      type="password"
-                      value={config.cfAccessClientSecret}
-                      onChange={(e) => setConfig({ ...config, cfAccessClientSecret: e.target.value })}
-                      placeholder="CF Access Client Secret"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                  </div>
-                )}
-              </div>
-            </label>
           </div>
         </div>
 
@@ -238,7 +203,7 @@ export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }:
 
         <button
           type="submit"
-          disabled={isTesting}
+          disabled={isTesting || !config.domain || !config.email || !config.apiToken || !config.cfAccessToken}
           className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isTesting ? (
