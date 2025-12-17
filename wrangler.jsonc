@@ -1,8 +1,10 @@
 {
   "name": "jira-sprint-dashboard",
   "compatibility_date": "2025-12-17",
+  "build": {
+    "command": "npm run build"
+  },
   "assets": {
-    "directory": "./dist",
-    "build_command": "npm run build"
+    "directory": "./dist"
   }
 }
