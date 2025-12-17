@@ -8,7 +8,8 @@
     "proxy": "node server/proxy.js",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && npx wrangler deploy"
   },
   "dependencies": {
     "cors": "^2.8.5",
