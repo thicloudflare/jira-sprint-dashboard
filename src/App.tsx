@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { Phase, TimelineData, Epic, EpicStatus, PhaseType } from './types';
+import type { Phase, TimelineData, EpicStatus, PhaseType } from './types';
 import { mockData } from './mockData';
 import { Sidebar } from './components/Sidebar';
 import { Timeline } from './components/Timeline';
@@ -8,7 +8,7 @@ import { JiraSettings, type JiraConfig } from './components/JiraSettings';
 import { JiraApiService } from './services/jiraApi';
 import { JiraWriteService } from './services/jiraWrite';
 import { transformJiraDataToTimeline } from './services/jiraTransformer';
-import { PhasesApiService } from './services/phasesApi';
+// import { PhasesApiService } from './services/phasesApi';
 import { getCurrentQuarter } from './components/QuarterFilter';
 import { Loader, AlertCircle } from 'lucide-react';
 
@@ -26,42 +26,15 @@ function App() {
     epics: mockData.epics.map(epic => ({ ...epic, phases: epic.phases.map(p => ({ ...p })) }))
   }));
   const [jiraData, setJiraData] = useState<TimelineData | null>(null);
-  const [phasesApiData, setPhasesApiData] = useState<TimelineData | null>(null);
+  const [phasesApiData] = useState<TimelineData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [jiraConfig, setJiraConfig] = useState<JiraConfig | null>(null);
   const [jiraWriteService, setJiraWriteService] = useState<JiraWriteService | null>(null);
-  const [isPhasesApiConnected, setIsPhasesApiConnected] = useState(false);
+  const [isPhasesApiConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [useMockData, setUseMockData] = useState(true);
   const [selectedQuarter, setSelectedQuarter] = useState(getCurrentQuarter());
-
-  const handlePhasesApiConnect = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const phasesService = new PhasesApiService();
-      
-      const connectionTest = await phasesService.testConnection();
-      if (!connectionTest) {
-        throw new Error('Failed to connect to Phases API at https://ai-design-workflow.pages.dev');
-      }
-
-      const data = await phasesService.fetchPhases();
-      
-      setPhasesApiData(data);
-      setTimelineData(data);
-      setIsPhasesApiConnected(true);
-      setUseMockData(false);
-    } catch (err) {
-      console.error('Phases API connection error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to connect to Phases API');
-      setIsPhasesApiConnected(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleJiraConnect = async (config: JiraConfig) => {
     setIsLoading(true);
@@ -123,11 +96,6 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const toggleDataSource = () => {
-    setUseMockData(!useMockData);
-    setTimelineData(useMockData ? timelineData : mockData);
   };
 
   useEffect(() => {

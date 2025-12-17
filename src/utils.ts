@@ -1,4 +1,4 @@
-import type { Epic, Phase, Story, WorkloadConfig } from './types';
+import type { Epic, Phase, WorkloadConfig } from './types';
 
 export const calculatePhaseRemainingHours = (
   phase: Phase,

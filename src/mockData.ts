@@ -1,4 +1,4 @@
-import type { Epic, TimelineData, PhaseType } from './types';
+import type { TimelineData, PhaseType } from './types';
 
 const PHASE_COLORS: Record<PhaseType, string> = {
   Discovery: '#8B5CF6',

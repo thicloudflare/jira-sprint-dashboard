@@ -16,7 +16,7 @@ const STATUS_CONFIG: Record<EpicStatus, { label: string; color: string; bgColor:
   'done': { label: 'Done', color: 'text-green-700', bgColor: 'bg-green-100' },
 };
 
-export const EpicStatusControl = ({ currentStatus, onStatusChange, epicId }: EpicStatusControlProps) => {
+export const EpicStatusControl = ({ currentStatus, onStatusChange, epicId: _epicId }: EpicStatusControlProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);

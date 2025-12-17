@@ -15,7 +15,7 @@ interface PhaseDetailPanelProps {
   epicId?: string;
 }
 
-export const PhaseDetailPanel = ({ phase, config, onClose, onAddStory, onUpdateStoryStatus, onDeleteStory, onDeletePhase, epicId }: PhaseDetailPanelProps) => {
+export const PhaseDetailPanel = ({ phase, config, onClose, onAddStory, onUpdateStoryStatus, onDeleteStory, onDeletePhase, epicId: _epicId }: PhaseDetailPanelProps) => {
   const [isAddingStory, setIsAddingStory] = useState(false);
   const [newStoryTitle, setNewStoryTitle] = useState('');
   const [newStoryPoints, setNewStoryPoints] = useState('3');
