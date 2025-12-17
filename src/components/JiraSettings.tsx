@@ -28,6 +28,7 @@ export interface JiraConfig {
 export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }: JiraConnectionFormProps) => {
   const [isTesting, setIsTesting] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showTokenHelp, setShowTokenHelp] = useState(false);
   const [config, setConfig] = useState<JiraConfig>({
     domain: localStorage.getItem('jira_domain') || '',
     email: localStorage.getItem('jira_email') || '',
@@ -145,16 +146,28 @@ export const JiraConnectionForm = ({ onConnect, isConnected, embedded = false }:
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 required
               />
-              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                <p className="text-xs font-medium text-blue-800 mb-2">How to get your token:</p>
-                <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
-                  <li>Open Terminal</li>
-                  <li>First, login: <code className="bg-blue-100 px-1 rounded">cloudflared access login jira.cfdata.org</code></li>
-                  <li>A browser window will open - log in with your Cloudflare credentials</li>
-                  <li>After login, run: <code className="bg-blue-100 px-1 rounded">cloudflared access token -app jira.cfdata.org</code></li>
-                  <li>Copy the entire token and paste it above</li>
-                </ol>
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowTokenHelp(!showTokenHelp)}
+                className="mt-2 flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+              >
+                <ChevronDown className={`w-3 h-3 transition-transform ${showTokenHelp ? 'rotate-180' : ''}`} />
+                How to get your token
+              </button>
+              {showTokenHelp && (
+                <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+                  <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
+                    <li>Open Terminal</li>
+                    <li>First, login: <code className="bg-blue-100 px-1 rounded">cloudflared access login jira.cfdata.org</code></li>
+                    <li>A browser window will open - log in with your Cloudflare credentials</li>
+                    <li>After login, run: <code className="bg-blue-100 px-1 rounded">cloudflared access token -app jira.cfdata.org</code></li>
+                    <li>Copy the entire token and paste it above</li>
+                  </ol>
+                  <p className="mt-3 text-xs text-amber-700 bg-amber-50 p-2 rounded">
+                    ⚠️ Tokens expire after ~24 hours. You'll need to refresh periodically.
+                  </p>
+                </div>
+              )}
             </div>
 
           </div>
