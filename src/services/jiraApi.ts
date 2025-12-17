@@ -119,10 +119,14 @@ export class JiraApiService {
       jql += ` AND project = ${projectKey}`;
     }
     
-    // Default to current user if no assignee specified
-    jql += ` AND assignee = ${assignee || 'currentUser()'}`;
+    // Only filter by assignee if explicitly specified (currentUser() doesn't work with CF Access)
+    if (assignee) {
+      jql += ` AND assignee = ${assignee}`;
+    }
     
     jql += ' ORDER BY created DESC';
+    
+    console.log('🔍 JQL Query:', jql);
 
     // Limit to 20 most recent epics to avoid too many requests
     return this.searchIssues(jql, 20) as Promise<JiraEpic[]>;
