@@ -1,6 +1,6 @@
 import type { ToolkitPhase, ToolkitApiResponse } from '../types/toolkit';
 
-const API_URL = import.meta.env.VITE_AI_TOOLKIT_API_URL || 'http://localhost:3001/api/toolkit-proxy';
+const API_URL = import.meta.env.VITE_AI_TOOLKIT_API_URL || '/api/toolkit-proxy';
 const FULL_TOOLKIT_URL = import.meta.env.VITE_AI_TOOLKIT_FULL_URL || 'https://ai-design-workflow.thi-s-ent-account.workers.dev';
 
 export const toolkitApi = {

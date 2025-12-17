@@ -58,7 +58,7 @@ export class JiraApiService {
     this.isCloudInstance = cleanDomain.includes('atlassian.net');
     const apiVersion = this.isCloudInstance ? '3' : '2';
     this.baseUrl = `https://${cleanDomain}/rest/api/${apiVersion}`;
-    this.proxyUrl = 'http://localhost:3001/api/jira-proxy';
+    this.proxyUrl = '/api/jira-proxy';
   }
 
   private getAuthHeader(): string {

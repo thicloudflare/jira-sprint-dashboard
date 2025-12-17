@@ -43,7 +43,7 @@ export const PhaseDetailPanel = ({ phase, config, onClose, onAddStory, onUpdateS
     console.log('🔍 Fetching tools for phase:', phaseType, '→', mappedPhase);
     
     try {
-      const response = await fetch(`http://localhost:3001/api/toolkit-proxy/phases`);
+      const response = await fetch(`/api/toolkit-proxy/phases`);
       console.log('📡 API Response status:', response.status);
       
       if (response.ok) {

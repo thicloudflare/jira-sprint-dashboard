@@ -8,7 +8,7 @@ interface JiraWriteConfig {
 
 export class JiraWriteService {
   private baseUrl: string;
-  private proxyUrl = 'http://localhost:3001/api/jira-proxy';
+  private proxyUrl = '/api/jira-proxy';
   private config: JiraWriteConfig;
   
   constructor(config: JiraWriteConfig) {
