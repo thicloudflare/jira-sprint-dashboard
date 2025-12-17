@@ -57,6 +57,7 @@ export const JiraSettings = ({ onConnect, isConnected }: JiraSettingsProps) => {
         onClick={() => setIsOpen(true)}
         className="fixed top-4 right-4 p-2 bg-white rounded-full shadow-lg hover:shadow-xl transition-all z-50"
         title="Jira Settings"
+        data-jira-settings
       >
         <Settings className="w-5 h-5 text-gray-700" />
         {isConnected && (
