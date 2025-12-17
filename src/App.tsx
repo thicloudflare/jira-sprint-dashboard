@@ -114,6 +114,18 @@ function App() {
     }
   }, []);
 
+  // Update document title based on Jira email/username
+  useEffect(() => {
+    const email = jiraConfig?.email;
+    if (email) {
+      const username = email.split('@')[0];
+      const capitalizedName = username.charAt(0).toUpperCase() + username.slice(1);
+      document.title = `${capitalizedName}'s Jira Dashboard`;
+    } else {
+      document.title = 'Your Jira Dashboard';
+    }
+  }, [jiraConfig]);
+
   const handleEpicStatusChange = (epicId: string, newStatus: EpicStatus) => {
     const updateData = (prevData: TimelineData) => {
       const updatedEpics = prevData.epics.map(epic => {
