@@ -149,7 +149,7 @@ export const EpicTrack = ({ epic, config, onPhaseClick, selectedPhase, onAddPhas
           <div className="relative">
             <button
               onClick={() => setShowPhaseSelector(!showPhaseSelector)}
-              className="flex items-center gap-1 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg border border-dashed border-gray-300 hover:border-gray-400 transition-colors"
+              className="flex items-center gap-1 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 rounded-lg border border-gray-300 hover:border-gray-400 transition-colors"
               title="Add phase"
             >
               <Plus className="w-4 h-4" />

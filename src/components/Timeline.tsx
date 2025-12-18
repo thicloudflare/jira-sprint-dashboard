@@ -112,17 +112,18 @@ export const Timeline = ({ data, onPhaseClick, selectedPhase, onAddPhase, onReor
               return (
                 <div
                   key={index}
-                  className="absolute top-0 bottom-0 border-l-2 border-dashed border-gray-300"
+                  className="absolute top-0 bottom-0"
                   style={{ left: `${position}%` }}
                 >
-                  <div className="sticky top-0 -mt-6 -ml-12 w-24 text-center">
+                  <div className="sticky top-0 -mt-6 -ml-12 w-24 text-center z-10">
                     <span className="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded">
                       Sprint {index + 1}
                     </span>
-                    <div className="text-xs text-gray-400 mt-1">
+                    <div className="text-xs text-gray-400 mt-1 bg-white px-2 rounded">
                       {sprintDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </div>
                   </div>
+                  <div className="absolute top-8 bottom-0 border-l-2 border-dashed border-gray-300" />
                 </div>
               );
             })}
