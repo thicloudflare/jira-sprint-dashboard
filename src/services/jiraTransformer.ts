@@ -256,6 +256,8 @@ export function transformJiraDataToTimeline(
       phases,
       startDate: new Date(jiraEpic.fields.created),
       deadline: jiraEpic.fields.duedate ? new Date(jiraEpic.fields.duedate) : undefined,
+      assignee: jiraEpic.fields.assignee?.displayName,
+      assigneeEmail: jiraEpic.fields.assignee?.emailAddress,
     };
   });
   

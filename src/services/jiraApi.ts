@@ -140,8 +140,8 @@ export class JiraApiService {
     
     console.log('🔍 JQL Query:', jql);
 
-    // Limit to 20 most recent epics to avoid too many requests
-    return this.searchIssues(jql, 20) as Promise<JiraEpic[]>;
+    // Limit to 50 most recent epics
+    return this.searchIssues(jql, 50) as Promise<JiraEpic[]>;
   }
 
   async getIssuesByEpic(epicKey: string): Promise<JiraIssue[]> {

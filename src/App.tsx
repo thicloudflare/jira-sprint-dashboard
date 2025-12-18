@@ -10,7 +10,10 @@ import { JiraWriteService } from './services/jiraWrite';
 import { transformJiraDataToTimeline } from './services/jiraTransformer';
 // import { PhasesApiService } from './services/phasesApi';
 import { getCurrentQuarter } from './components/QuarterFilter';
-import { Loader, AlertCircle, Plug } from 'lucide-react';
+import { Loader, AlertCircle, Plug, Play } from 'lucide-react';
+
+// Check if we're in demo mode from URL params
+const isDemo = () => new URLSearchParams(window.location.search).get('demo') === 'true';
 
 const PHASE_COLORS: Record<PhaseType, string> = {
   Discovery: '#8B5CF6',
@@ -35,6 +38,8 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [useMockData, setUseMockData] = useState(true);
   const [selectedQuarter, setSelectedQuarter] = useState(getCurrentQuarter());
+  const [showInProgressOnly, setShowInProgressOnly] = useState(false);
+  const [demoMode, setDemoMode] = useState(isDemo());
 
   const handleJiraConnect = async (config: JiraConfig) => {
     setIsLoading(true);
@@ -55,9 +60,11 @@ function App() {
         throw new Error('Failed to connect to Jira. Please check your credentials.');
       }
 
+      // Get epics assigned to the current user (use email username as assignee)
+      const username = config.email.split('@')[0];
       const { epics, issuesByEpic } = await jiraService.getAllWorkloadData(
         config.projectKey,
-        config.assignee
+        config.assignee || username
       );
 
       const transformedData = transformJiraDataToTimeline(epics, issuesByEpic);
@@ -223,8 +230,13 @@ function App() {
   };
 
   const handleAddStory = async (phaseType: string, newStory: typeof mockData.epics[0]['phases'][0]['stories'][0]) => {
+    if (!selectedPhaseKey) return;
+    
     const updateData = (prevData: TimelineData) => {
       const updatedEpics = prevData.epics.map(epic => {
+        // Only update the specific epic that is selected
+        if (epic.id !== selectedPhaseKey.epicId) return epic;
+        
         const phaseIndex = epic.phases.findIndex(p => p.type === phaseType);
         if (phaseIndex === -1) return epic;
         
@@ -478,10 +490,14 @@ function App() {
     else if (isConnected && jiraData) data = jiraData;
     else data = timelineData;
     
-    // Filter to only in-progress and done, then sort: in-progress on top, done on bottom
-    const filteredEpics = data.epics.filter(epic => 
-      epic.status === 'in-progress' || epic.status === 'done'
-    );
+    // Filter based on In Progress toggle - always show only in-progress and done
+    const filteredEpics = data.epics.filter(epic => {
+      if (showInProgressOnly) {
+        return epic.status === 'in-progress';
+      }
+      // Show only in-progress and done when toggle is off
+      return epic.status === 'in-progress' || epic.status === 'done';
+    });
     
     const sortedEpics = [...filteredEpics].sort((a) => {
       return a.status === 'in-progress' ? -1 : 1;
@@ -490,6 +506,7 @@ function App() {
     console.log('📊 displayData updated:', {
       source: useMockData ? 'mock' : isConnected ? 'jira' : 'timeline',
       epicCount: sortedEpics.length,
+      showInProgressOnly,
       epics: sortedEpics.map(e => ({
         id: e.id,
         phaseCount: e.phases.length
@@ -497,7 +514,7 @@ function App() {
     });
     
     return { ...data, epics: sortedEpics };
-  }, [useMockData, timelineData, jiraData, phasesApiData, isConnected, isPhasesApiConnected]);
+  }, [useMockData, timelineData, jiraData, phasesApiData, isConnected, isPhasesApiConnected, showInProgressOnly]);
 
   const selectedPhase = useMemo(() => {
     if (!selectedPhaseKey) return null;
@@ -540,7 +557,21 @@ function App() {
 
   return (
     <div className="flex h-screen bg-gray-100 relative">
-      <JiraSettings onConnect={handleJiraConnect} onDisconnect={handleJiraDisconnect} isConnected={isConnected} />
+      <JiraSettings 
+        onConnect={handleJiraConnect} 
+        onDisconnect={handleJiraDisconnect} 
+        isConnected={isConnected} 
+        hideButton={!isConnected && !isLoading && !demoMode}
+      />
+      
+      {demoMode && !isConnected && (
+        <button
+          onClick={() => setDemoMode(false)}
+          className="fixed top-4 right-4 px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all z-50 flex items-center gap-2"
+        >
+          Exit Demo
+        </button>
+      )}
       
       {isLoading && (
         <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center z-40">
@@ -570,17 +601,22 @@ function App() {
       )}
 
 
-      {!isConnected && !isLoading ? (
+      {!isConnected && !isLoading && !demoMode ? (
         <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 p-8">
-          <div className="w-full max-w-md">
+          <div className="w-full max-w-xl">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Plug className="w-8 h-8 text-blue-600" />
               </div>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to Your Jira Dashboard</h2>
-              <p className="text-gray-600">
-                Connect your Jira account to visualize your epics and track progress across phases.
-              </p>
+              <p className="text-gray-600 mb-3">Connect your Jira account to visualize your epics and track progress.</p>
+              <button
+                onClick={() => setDemoMode(true)}
+                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              >
+                <Play className="w-4 h-4" />
+                View Demo
+              </button>
             </div>
             <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
               <JiraConnectionForm onConnect={handleJiraConnect} isConnected={isConnected} embedded />
@@ -602,7 +638,9 @@ function App() {
             onAddPhase={handleAddPhase}
             onReorderPhases={handleReorderPhases}
             jiraDomain={jiraConfig?.domain}
-            userEmail={jiraConfig?.email}
+            userEmail={jiraConfig?.email || (demoMode ? 'demo@example.com' : undefined)}
+            showInProgressOnly={showInProgressOnly}
+            onToggleInProgressOnly={setShowInProgressOnly}
           />
         </>
       )}

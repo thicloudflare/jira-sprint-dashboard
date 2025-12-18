@@ -1,4 +1,4 @@
-export type TShirtSize = 'S' | 'M' | 'L';
+export type TShirtSize = 'S' | 'M' | 'L' | 'XL';
 
 export type PhaseType = 'Discovery' | 'Iteration' | 'Testing' | 'Implement';
 
@@ -30,6 +30,8 @@ export interface Epic {
   phases: Phase[];
   deadline?: Date;
   startDate: Date;
+  assignee?: string;
+  assigneeEmail?: string;
 }
 
 export interface WorkloadConfig {

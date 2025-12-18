@@ -4,6 +4,7 @@ import https from 'https';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { execSync } from 'child_process';
 
 // Load .env.local
 const __filename = fileURLToPath(import.meta.url);
@@ -57,21 +58,67 @@ app.post('/api/jira-proxy', async (req, res) => {
     console.log('Method:', method);
     console.log('CF Access:', effectiveCfToken ? 'JWT Token' : (effectiveCfClientId ? 'Service Token' : 'Not provided'));
     console.log('Token source:', cfAccessToken ? 'client' : (envCfToken ? 'env' : 'none'));
+    console.log('Token length:', effectiveCfToken?.length || 0);
+    console.log('Token preview:', effectiveCfToken?.substring(0, 20) + '...' || 'none');
 
     const headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'User-Agent': 'curl/8.0',
     };
 
     // CF Access authentication (for cfdata.org) - don't use Basic Auth with CF Access
     if (effectiveCfToken) {
       headers['CF-Access-Token'] = effectiveCfToken;
+      console.log('Using CF-Access-Token header');
     } else if (effectiveCfClientId && effectiveCfClientSecret) {
       headers['CF-Access-Client-Id'] = effectiveCfClientId;
       headers['CF-Access-Client-Secret'] = effectiveCfClientSecret;
     } else if (auth) {
       // Only use Basic Auth for standard Atlassian Cloud (no CF Access)
       headers['Authorization'] = auth;
+    }
+
+    // Use curl directly since Node.js fetch has issues with CF Access
+    // Get fresh token from cloudflared if CF Access is needed
+    if (effectiveCfToken || url.includes('jira.cfdata.org')) {
+      try {
+        console.log('Getting fresh CF Access token from cloudflared...');
+        const freshToken = execSync('cloudflared access token -app jira.cfdata.org 2>/dev/null', { encoding: 'utf-8' }).trim();
+        console.log('Fresh token length:', freshToken.length);
+        
+        console.log('Using curl for CF Access request');
+        const curlHeaders = [
+          '-H', 'Content-Type: application/json',
+          '-H', 'Accept: application/json',
+          '-H', `CF-Access-Token: ${freshToken}`,
+        ];
+        
+        if (body && method !== 'GET') {
+          curlHeaders.push('-d', typeof body === 'string' ? body : JSON.stringify(body));
+        }
+        
+        const curlCmd = `curl -s -L -X ${method} ${curlHeaders.map(h => `'${h}'`).join(' ')} '${url}'`;
+        const result = execSync(curlCmd, { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
+        
+        console.log('Curl response (first 200 chars):', result.substring(0, 200));
+        
+        let data;
+        try {
+          data = JSON.parse(result);
+        } catch {
+          data = { 
+            error: 'Jira returned non-JSON response',
+            preview: result.substring(0, 500)
+          };
+          return res.json({ ok: false, error: data.error, data });
+        }
+        
+        return res.json({ ok: true, data });
+      } catch (curlError) {
+        console.error('Curl error:', curlError.message);
+        return res.status(500).json({ ok: false, error: curlError.message });
+      }
     }
 
     const fetchOptions = {

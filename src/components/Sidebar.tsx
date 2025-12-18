@@ -1,8 +1,15 @@
-import type { TimelineData, EpicStatus } from '../types';
-import { calculateCapacityPercentage, calculateTotalRemainingHours, formatHours } from '../utils';
+import type { TimelineData, EpicStatus, TShirtSize } from '../types';
 import { CapacityGauge } from './CapacityGauge';
 import { EpicList } from './EpicList';
 import { QuarterFilter } from './QuarterFilter';
+
+// Quarter capacity percentages per T-shirt size (designer-month)
+const SIZE_CAPACITY: Record<TShirtSize, number> = {
+  'S': 8,
+  'M': 31,
+  'L': 80,
+  'XL': 160,
+};
 
 interface SidebarProps {
   data: TimelineData;
@@ -12,8 +19,17 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ data, selectedQuarter, onQuarterChange, onEpicStatusChange }: SidebarProps) => {
-  const capacityPercentage = calculateCapacityPercentage(data.epics, data.config);
-  const totalRemainingHours = calculateTotalRemainingHours(data.epics, data.config);
+  // Calculate quarter capacity based on T-shirt sizes
+  const sizeCounts = data.epics.reduce((acc, epic) => {
+    const size = epic.size || 'M';
+    acc[size] = (acc[size] || 0) + 1;
+    return acc;
+  }, {} as Record<TShirtSize, number>);
+
+  const totalCapacityUsed = data.epics.reduce((sum, epic) => {
+    const size = epic.size || 'M';
+    return sum + (SIZE_CAPACITY[size] || 0);
+  }, 0);
 
   return (
     <div className="w-80 bg-gray-50 border-r border-gray-200 p-6 space-y-6 overflow-y-auto">
@@ -22,21 +38,7 @@ export const Sidebar = ({ data, selectedQuarter, onQuarterChange, onEpicStatusCh
         onQuarterChange={onQuarterChange}
       />
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold mb-4">Workload Summary</h3>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600">Total Capacity:</span>
-            <span className="font-medium">{formatHours(data.config.totalAvailableHours)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Remaining:</span>
-            <span className="font-semibold text-blue-600">{formatHours(totalRemainingHours)}</span>
-          </div>
-        </div>
-      </div>
-
-      <CapacityGauge percentage={capacityPercentage} />
+      <CapacityGauge percentage={totalCapacityUsed} sizeCounts={sizeCounts} />
       
       <EpicList epics={data.epics} onEpicStatusChange={onEpicStatusChange} />
     </div>
